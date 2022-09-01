@@ -1,8 +1,0 @@
-Decisões relativas ao dataset:
-Diversas colunas da tabela foram removidas, deixando apenas o necessário para os testes feitos no código.
-Com a remoção dessas colunas, o programa teve seu tempo de execução diminuído de 5 minutos para apenas 1,5 minuto na máquina utilizada para os testes.
-
-Informações e detalhes sobre as cinco opções selecionadas pelo grupo para a análise:
-Os dados escolhidos pelo grupo tiveram grande foco na relação entre covid e problemas relacionados à respiração, seja por doença (asma) ou por tabagismo.
-Nas consultas, foram escolhidos somente pacientes cujo teste de covid foi positivo.
-Para uma melhor análise da relação dos problemas respiratórios com covid, foram separados os casos onde os paciente fumantes e não fumantes foram a obito, e também casos onde os pacientes portadores e não portadores de asma foram intubados. 
