@@ -12,9 +12,9 @@
 //identificar para faminto
 #define comendo 2 
 //identificar para comendo
-#define dir (nfilo + numfilo -1)%numfilo 
+#define dir (nfilo +1)%numfilo 
 //pega o garfo da direita
-#define esq (nfilo + 1)%numfilo 
+#define esq (nfilo + 4)%numfilo 
 // pega garfo da direita
 
 sem_t sem[numfilo];//inicia semaforo para cada talher
