@@ -1,108 +1,69 @@
-//************************************************************//
-//INCLUDES E IDENTIFICADORES PARA AS FUNÇÕES//
-//************************************************************//
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <unistd.h>
+#include <time.h>
 
-#define numfilo 5 
-//identificar quantos filosofos tem
-#define pensando 0 
-//identificar para pensando
-#define faminto 1 
-//identificar para faminto
-#define comendo 2 
-//identificar para comendo
-#define dir (nfilo+1)%numfilo 
-// pega o garfo da direita
-#define esq (nfilo+4)%numfilo
-// pega garfo da direita
+//numero threads (cada conta)
+#define NT 100
+sem_t sem[NT];
 
-sem_t sem[numfilo];//inicia semaforo
-sem_t mutex;
-int estado [numfilo];// estado em que os filosofos se encontram
-int nfilo[numfilo]= {0,1,2,3,4};// inicialização dos filosofos
+int saldo[NT] = {100,100}; //saldo das contas 0 e 1
+int nt[100]; //inicialização das transferencias (threads)
 
-// identificadores das funções
-void *fil(void *n);
-void getgarfo(int);
-void soltagarfo(int);
-void test(int);
-
-
-//************************************************************//
-//FUNÇÃO FIL//
-//************************************************************//
-void *fil(void *n){
+void *transacao(void *t){
+  int *i = t; //numero da thread que entra na funçao
   while(1){
-    int *i = n;
     sleep(1);
-    getgarfo(*i);
+    sem_wait(&sem[*i]);
+    int random = rand()%2; //identifica qual conta sera from ou to
+    if(random==0){ //conta 0 from
+      if(saldo[0]>=nt[*i]){
+        printf("\nCONTA FROM (1)");
+        printf("\nCONTA TO (2)");
+        saldo[0]-=nt[*i];
+        saldo[1]+=nt[*i];
+        printf("\nVALOR DA TRANSFERENCIA: %d", nt[*i]);
+        printf("\nSALDO DA CONTA FROM (1) APOS TRANSFERENCIA: %d", saldo[0]);
+        printf("\nSALDO DA CONTA TO (2) APOS TRANSFERENCIA: %d", saldo[1]);
+        printf("\n\n\n");
+      }
+    }
+    else{ //conta 1 from
+      if(saldo[1]>=nt[*i]){
+        printf("\nCONTA FROM (2)");
+        printf("\nCONTA TO (1)");
+        saldo[1]-=nt[*i];
+        saldo[0]+=nt[*i];
+        printf("\nVALOR DA TRANSFERENCIA: %d", nt[*i]);
+        printf("\nSALDO DA CONTA FROM (2) APOS TRANSFERENCIA: %d", saldo[0]);
+        printf("\nSALDO DA CONTA TO (1) APOS TRANSFERENCIA: %d", saldo[1]);
+        printf("\n\n\n");
+      }
+    }
     sleep(1);
-    soltagarfo(*i);
+    sem_post(&sem[*i]);
   }
+  pthread_exit(0);
 }
 
-
-//************************************************************//
-//FUNÇÃO GETGARFO//
-//************************************************************//
-void getgarfo(int nfilo){
-  sem_wait(&mutex);
-  estado[nfilo]= faminto;
-  printf("Filosofo %d esta com fome \n\n",nfilo+1);// Imprime apartir do 1
-  test(nfilo);
-  sem_post(&mutex);
-  sem_wait(&sem[nfilo]);
-  sleep(1);
-}
-
-
-//************************************************************//
-//FUNÇÃO SOLTAGARFO//
-//************************************************************//
-void soltagarfo(int nfilo){
-  sem_wait(&mutex);
-  estado[nfilo]= pensando;
-  printf("Filosofo %d terminou de comer e deixou os garfos %d e %d \n",nfilo+1,esq+1,nfilo+1);
-  printf("Filosofo %d agora esta pensando\n\n",nfilo+1);
-  test(esq);
-  test(dir);
-  sem_post(&mutex);
-}
-
-
-//************************************************************//
-//FUNÇÃO TESTAR//
-//************************************************************//
-void test(int nfilo){
-  if(estado[nfilo]==faminto&& estado[esq]!=comendo&& estado[dir]!=comendo){
-    estado[nfilo]=comendo;
-    sleep(1);
-    printf("Filosofo %d pegou os garfos %d e %d \n",nfilo+1,esq+1,nfilo+1);
-    printf("Filosofo %d esta comendo \n\n\n",nfilo+1);
-    sem_post(&sem[nfilo]);
-  }
-}
-
-
-//************************************************************//
-//FUNÇÃO PRINCIPAL//
-//************************************************************//
 int main(){
+  srand(time(NULL));
+  for(int i=0; i<NT; i++){ //rodando os numeros que as trheads irao retirar
+    nt[i] = rand()%20;
+  }
   int i;
-  pthread_t ident_tr[numfilo];//identificador de thread
-  sem_init(&mutex,0,1);
-  for(i=0; i<numfilo; i++)
-    sem_init(&sem[i],0,0);
-  for(i=0;i<numfilo;i++){
-    pthread_create(&ident_tr[i], NULL, fil, &nfilo[i]);//cria as threads necessarias
-    printf("Filosofo %d esta pensando.\n",i+1);//printa filosofo a pensar
+  pthread_t ident_tr[NT]; //indentificando a thread
+  for(i=0; i<NT; i++){
+    sem_init(&sem[i],0,1); //semaphore para cada thread
+  }
+  for(i=0;i<NT;i++){
+    pthread_create(&ident_tr[i], NULL, transacao, &nt[i]); //cria as threads necessarias
+    printf("Thread %d esta criada, seu valor: %d.\n",i+1, nt[i]); //criacao de conta
   }
   printf("\n\n");
-  for(i=0;i<numfilo;i++){
-    pthread_join(ident_tr[i],NULL);//Junção das threads
+  for(i=0;i<NT;i++){
+    pthread_join(ident_tr[i],NULL); //Junção das threads
   }
-  return(0);
 }
